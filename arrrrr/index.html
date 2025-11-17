@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2196F3">
+    <title>MyDiary - Catatan Harian</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="manifest" href="#" id="manifest-placeholder">
+    <style>
+        :root {
+            --primary-blue: #2196F3;
+            --light-blue: #E3F2FD;
+            --white: #FFFFFF;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--white) 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 15px 0;
+        }
+        
+        .nav-item-custom {
+            text-align: center;
+            color: var(--primary-blue);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .nav-item-custom:hover {
+            transform: scale(1.1);
+        }
+        
+        .diary-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .diary-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-primary-custom {
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .btn-primary-custom:hover {
+            background: #1976D2;
+        }
+        
+        .form-area {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .diary-content {
+            min-height: 200px;
+            resize: vertical;
+        }
+        
+        .action-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .header-app {
+            background: var(--primary-blue);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 0 0 20px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-app">
+        <h1 class="m-0">📔 MyDiary</h1>
+        <small>Catatan Harian Anda</small>
+    </div>
+
+    <div class="container">
+        <!-- List View -->
+        <div id="listView">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>Daftar Catatan</h4>
+                <button class="btn btn-primary-custom" onclick="showCreateForm()">
+                    ➕ Buat Diary
+                </button>
+            </div>
+            <div id="diaryList"></div>
+            <div id="emptyState" class="text-center mt-5">
+                <p class="text-muted">Belum ada catatan diary. Mulai buat catatan pertama Anda!</p>
+            </div>
+        </div>
+
+        <!-- Create/Edit Form View -->
+        <div id="formView" class="hidden">
+            <button class="btn btn-outline-secondary mb-3" onclick="backToList()">
+                ⬅ Kembali
+            </button>
+            <div class="form-area">
+                <h4 class="mb-4" id="formTitle">Buat Diary Baru</h4>
+                <div class="mb-3">
+                    <label class="form-label">Hari</label>
+                    <input type="text" class="form-control" id="dayInput" placeholder="contoh: Senin">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tanggal</label>
+                    <input type="date" class="form-control" id="dateInput">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Catatan</label>
+                    <textarea class="form-control diary-content" id="contentInput" placeholder="Tulis catatan harian Anda di sini..."></textarea>
+                </div>
+                <button class="btn btn-primary-custom w-100" onclick="saveDiary()">
+                    💾 Simpan
+                </button>
+            </div>
+        </div>
+
+        <!-- Read View -->
+        <div id="readView" class="hidden">
+            <button class="btn btn-outline-secondary mb-3" onclick="backToList()">
+                ⬅ Kembali
+            </button>
+            <div class="form-area position-relative">
+                <div class="action-buttons">
+                    <button class="btn-icon" style="background: var(--primary-blue);" onclick="editDiary()">
+                        ✏️
+                    </button>
+                    <button class="btn-icon" style="background: #f44336;" onclick="deleteDiary()">
+                        🗑️
+                    </button>
+                </div>
+                <h4 id="readDay" class="mb-2"></h4>
+                <p class="text-muted" id="readDate"></p>
+                <hr>
+                <p id="readContent" style="white-space: pre-wrap;"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="navbar-bottom">
+        <div class="container">
+            <div class="row">
+                <div class="col-6 nav-item-custom" onclick="showListView()">
+                    <div style="font-size: 24px;">📝</div>
+                    <small>Daftar</small>
+                </div>
+                <div class="col-6 nav-item-custom" onclick="showCreateForm()">
+                    <div style="font-size: 24px;">➕</div>
+                    <small>Buat Baru</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let diaries = {};
+        let currentId = null;
+        let editMode = false;
+
+        // Load data from memory
+        function loadDiaries() {
+            renderDiaryList();
+        }
+
+        // Save diary
+        function saveDiary() {
+            const day = document.getElementById('dayInput').value;
+            const date = document.getElementById('dateInput').value;
+            const content = document.getElementById('contentInput').value;
+
+            if (!day || !date || !content) {
+                alert('Harap isi semua field!');
+                return;
+            }
+
+            const id = editMode ? currentId : Date.now().toString();
+            diaries[id] = { day, date, content };
+
+            // Show read view after saving
+            showReadView(id);
+            editMode = false;
+        }
+
+        // Render diary list
+        function renderDiaryList() {
+            const list = document.getElementById('diaryList');
+            const emptyState = document.getElementById('emptyState');
+            list.innerHTML = '';
+
+            const entries = Object.entries(diaries).sort((a, b) => b[0] - a[0]);
+
+            if (entries.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                entries.forEach(([id, diary]) => {
+                    const card = document.createElement('div');
+                    card.className = 'diary-card';
+                    card.onclick = () => showReadView(id);
+                    card.innerHTML = `
+                        <h5>${diary.day}</h5>
+                        <p class="text-muted mb-2">${formatDate(diary.date)}</p>
+                        <p class="mb-0" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${diary.content}
+                        </p>
+                    `;
+                    list.appendChild(card);
+                });
+            }
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('id-ID', options);
+        }
+
+        // Show views
+        function showListView() {
+            document.getElementById('listView').classList.remove('hidden');
+            document.getElementById('formView').classList.add('hidden');
+            document.getElementById('readView').classList.add('hidden');
+            renderDiaryList();
+        }
+
+        function showCreateForm() {
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('formView').classList.remove('hidden');
+            document.getElementById('readView').classList.add('hidden');
+            document.getElementById('formTitle').textContent = 'Buat Diary Baru';
+            document.getElementById('dayInput').value = '';
+            document.getElementById('dateInput').value = '';
+            document.getElementById('contentInput').value = '';
+            editMode = false;
+        }
+
+        function showReadView(id) {
+            currentId = id;
+            const diary = diaries[id];
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('formView').classList.add('hidden');
+            document.getElementById('readView').classList.remove('hidden');
+            document.getElementById('readDay').textContent = diary.day;
+            document.getElementById('readDate').textContent = formatDate(diary.date);
+            document.getElementById('readContent').textContent = diary.content;
+        }
+
+        function editDiary() {
+            const diary = diaries[currentId];
+            document.getElementById('readView').classList.add('hidden');
+            document.getElementById('formView').classList.remove('hidden');
+            document.getElementById('formTitle').textContent = 'Edit Diary';
+            document.getElementById('dayInput').value = diary.day;
+            document.getElementById('dateInput').value = diary.date;
+            document.getElementById('contentInput').value = diary.content;
+            editMode = true;
+        }
+
+        function deleteDiary() {
+            if (confirm('Apakah Anda yakin ingin menghapus catatan ini?')) {
+                delete diaries[currentId];
+                showListView();
+            }
+        }
+
+        function backToList() {
+            showListView();
+        }
+
+        // Initialize
+        loadDiaries();
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(
+                        caches.open('mydiary-v1').then((cache) => cache.addAll(['/']))
+                    );
+                });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        caches.match(e.request).then((response) => response || fetch(e.request))
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl);
+        }
+
+        // Create manifest
+        const manifest = {
+            name: "MyDiary",
+            short_name: "MyDiary",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#E3F2FD",
+            theme_color: "#2196F3",
+            description: "Aplikasi catatan harian sederhana",
+            icons: [{
+                src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%232196F3' width='100' height='100'/%3E%3Ctext y='75' font-size='70' text-anchor='middle' x='50'%3E📔%3C/text%3E%3C/svg%3E",
+                sizes: "512x512",
+                type: "image/svg+xml"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+    </script>
+</body>
+</html>
